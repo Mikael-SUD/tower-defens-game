@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pixel Tower Defense 2D - Epic Gacha Edition</title>
+  <meta name="description" content="Game 2D Pixel Art Tower Defense 32x32 dengan Sistem Gacha, 6 Rarity Tier, Chapter 1-4 & Act 1-6 dengan Boss Wave 15, serta Tower Almanac.">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/gacha.css">
+  <link rel="stylesheet" href="css/index_menu.css">
+</head>
+<body>
+
+  <!-- ================= TOP HEADER NAVIGATION ================= -->
+  <header class="game-header">
+    <div class="header-left">
+      <div class="game-logo">⚔️ PIXEL TD 32x32</div>
+      <div class="header-currency">
+        <div class="currency-item gold">
+          <span>🪙</span> <span id="hud-gold">500</span> G
+        </div>
+        <div class="currency-item gems">
+          <span>💎</span> <span id="hud-gems">250</span> Gems
+        </div>
+        <div class="currency-item hp">
+          <span>❤️</span> <span id="hud-hp">20 / 20</span> HP
+        </div>
+      </div>
+    </div>
+
+    <div class="header-nav-buttons">
+      <button id="btn-nav-gacha" class="nav-btn btn-gacha">✨ GACHA TOWER</button>
+      <button id="btn-nav-index" class="nav-btn">📖 INDEX / ALMANAC</button>
+      <button id="btn-nav-deck" class="nav-btn">🎒 DECK (5)</button>
+      <button id="btn-nav-chapters" class="nav-btn">🗺️ PETA BABAK</button>
+      <button id="btn-toggle-sound" class="nav-btn">🔊 Audio</button>
+      <button id="btn-toggle-bgm" class="nav-btn">🎵 BGM: OFF</button>
+    </div>
+  </header>
+
+  <!-- ================= GAMEPLAY CONTAINER ================= -->
+  <main class="game-container">
+    
+    <!-- Viewport Canvas & In-Game HUD -->
+    <section class="viewport-wrapper">
+      <div class="canvas-frame">
+        <canvas id="gameCanvas" width="768" height="512"></canvas>
+
+        <!-- Top HUD Overlay -->
+        <div class="hud-top-overlay">
+          <div class="hud-pill hud-chapter-tag" id="hud-chapter-act">BAB 1 • ACT 1</div>
+          <div class="hud-pill hud-wave-tag" id="hud-wave">Wave 1 / 15</div>
+        </div>
+
+        <!-- Spells Floating Tray -->
+        <div class="spells-tray">
+          <button class="spell-btn" data-spell="meteor" title="Meteor Strike (Damage AOE masif)">☄️</button>
+          <button class="spell-btn" data-spell="blizzard" title="Absolute Blizzard (Membekukan semua monster)">❄️</button>
+          <button class="spell-btn" data-spell="gold_rush" title="Gold Harvest (+200 Gold Instan)">💰</button>
+        </div>
+
+        <!-- Boss Warning Announcement Banner -->
+        <div id="boss-banner" class="boss-banner-overlay hidden"></div>
+      </div>
+
+      <!-- Bottom Battle Controls Bar -->
+      <div class="battle-controls-bar">
+        <div class="deck-buttons-wrapper" id="battle-deck-buttons">
+          <!-- Populated by JavaScript from equipped deck -->
+        </div>
+
+        <div class="battle-action-buttons">
+          <button class="btn-speed active" data-speed="1">1x</button>
+          <button class="btn-speed" data-speed="2">2x</button>
+          <button class="btn-speed" data-speed="4">4x</button>
+          <button id="btn-start-wave" class="btn-start-wave">▶ Mulai Wave</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Sidebar Inspector -->
+    <aside id="tower-inspector" class="inspector-panel hidden">
+      <div class="inspector-header">
+        <div class="inspector-title" id="inspector-tower-name">Tower Info</div>
+        <button id="btn-close-inspector" class="btn-close-mini">×</button>
+      </div>
+
+      <div class="inspector-stats">
+        <div class="stat-item">
+          <span class="label">Damage</span>
+          <span class="val" id="inspector-atk">-</span>
+        </div>
+        <div class="stat-item">
+          <span class="label">Kecepatan</span>
+          <span class="val" id="inspector-spd">-</span>
+        </div>
+        <div class="stat-item">
+          <span class="label">Jangkauan</span>
+          <span class="val" id="inspector-rng">-</span>
+        </div>
+        <div class="stat-item">
+          <span class="label">Total Kills</span>
+          <span class="val" id="inspector-kills">0</span>
+        </div>
+      </div>
+
+      <div class="inspector-actions">
+        <button id="btn-upgrade-tower" class="btn-inspector btn-upgrade">Upgrade (100 G)</button>
+        <button id="btn-sell-tower" class="btn-inspector btn-sell">Jual (+70 G)</button>
+        <button id="btn-target-strategy" class="btn-inspector btn-strat">Target: FIRST</button>
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- ================= GACHA MODAL ================= -->
+  <div id="gacha-modal" class="modal-overlay hidden">
+    <div class="modal-window gacha-window">
+      <div class="modal-header">
+        <div class="modal-title">✨ SUMMON TOWER DIMENSI</div>
+        <button id="btn-close-gacha" class="btn-close-modal">×</button>
+      </div>
+      <div class="gacha-body">
+        <div class="gacha-rates-banner">
+          <span class="rate-tag common">Common: 50%</span>
+          <span class="rate-tag rare">Rare: 30%</span>
+          <span class="rate-tag epic">Epic: 14%</span>
+          <span class="rate-tag legendary">Legendary: 4.8%</span>
+          <span class="rate-tag mythic">Mythic: 1.0%</span>
+          <span class="rate-tag secret">Secret: 0.2%</span>
+        </div>
+
+        <div id="gacha-result-cards" class="gacha-display-area">
+          <div class="gacha-pedestal-empty">
+            <div class="rune-circle"></div>
+            <p>Pilih 1x Gacha (50 Gems) atau 10x Gacha (500 Gems) untuk memanggil Tower pahlawan!</p>
+          </div>
+        </div>
+
+        <div class="gacha-footer-actions">
+          <button id="btn-cheat-gems" class="btn-cheat">+500 Gems (Test)</button>
+          <button id="btn-gacha-1x" class="btn-gacha-pull btn-pull-1x">
+            <span>1x PULL</span>
+            <span class="pull-cost">💎 50 Gems</span>
+          </button>
+          <button id="btn-gacha-10x" class="btn-gacha-pull btn-pull-10x">
+            <span>10x PULL</span>
+            <span class="pull-cost">💎 500 Gems (Guaranteed Epic+)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TOWER INDEX (ALMANAC) MODAL ================= -->
+  <div id="index-modal" class="modal-overlay hidden">
+    <div class="modal-window index-window">
+      <div class="modal-header">
+        <div class="modal-title">📖 TOWER INDEX & ALMANAC</div>
+        <button id="btn-close-index" class="btn-close-modal">×</button>
+      </div>
+      <div class="index-body">
+        <div class="index-top-bar">
+          <div class="collection-progress-wrap">
+            <span id="index-progress-text" class="progress-label">Koleksi Terbuka: 0 / 17 (0%)</span>
+            <div class="progress-bar-bg">
+              <div id="index-progress-bar" class="progress-bar-fill" style="width: 0%;"></div>
+            </div>
+          </div>
+          <div class="index-filters">
+            <button class="index-filter-btn active" data-filter="all">SEMUA</button>
+            <button class="index-filter-btn" data-filter="common">COMMON</button>
+            <button class="index-filter-btn" data-filter="rare">RARE</button>
+            <button class="index-filter-btn" data-filter="epic">EPIC</button>
+            <button class="index-filter-btn" data-filter="legendary">LEGENDARY</button>
+            <button class="index-filter-btn" data-filter="mythic">MYTHIC</button>
+            <button class="index-filter-btn" data-filter="secret">SECRET</button>
+          </div>
+        </div>
+
+        <div id="index-grid" class="index-scroll-grid">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TOWER DETAIL INSPECTOR POPUP ================= -->
+  <div id="tower-detail-modal" class="modal-overlay hidden">
+    <div class="modal-window tower-detail-window">
+      <div class="modal-header">
+        <div class="modal-title">🔍 DETAIL INFORMASI TOWER</div>
+        <button id="btn-close-detail" class="btn-close-modal">×</button>
+      </div>
+      <div id="tower-detail-content" class="tower-detail-body">
+        <!-- Populated by JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= DECK BUILDER MODAL ================= -->
+  <div id="deck-modal" class="modal-overlay hidden">
+    <div class="modal-window deck-window">
+      <div class="modal-header">
+        <div class="modal-title">🎒 ATUR DECK PERTEMPURAN (MAKS. 5 TOWER)</div>
+        <button id="btn-close-deck" class="btn-close-modal">×</button>
+      </div>
+      <div class="deck-body">
+        <div>
+          <h4 style="font-size: 12px; color: var(--gold); margin-bottom: 8px;">DECK SAAT INI (Dibawa ke Pertempuran)</h4>
+          <div id="deck-slots-container" class="deck-slots-grid">
+            <!-- 5 Slots populated by JavaScript -->
+          </div>
+        </div>
+
+        <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+          <h4 style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">KOLEKSI TOWER TERBUKA (Klik untuk Pasang/Lepas)</h4>
+          <div id="deck-unlocked-pool" class="unlocked-pool-scroll">
+            <!-- Pool populated by JavaScript -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= CHAPTER & ACT SELECTOR MODAL ================= -->
+  <div id="chapter-modal" class="modal-overlay hidden">
+    <div class="modal-window chapter-window">
+      <div class="modal-header">
+        <div class="modal-title">🗺️ PEMILIHAN BABAK & ACT (15 WAVE + BOSS)</div>
+        <button id="btn-close-chapter" class="btn-close-modal">×</button>
+      </div>
+      <div class="chapter-body">
+        <div id="chapter-tabs" class="chapter-tabs-nav">
+          <!-- Chapter 1-4 Tabs populated by JavaScript -->
+        </div>
+
+        <div id="acts-grid" class="acts-grid-container">
+          <!-- Act 1-6 Cards populated by JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= VICTORY MODAL ================= -->
+  <div id="victory-modal" class="modal-overlay hidden">
+    <div class="modal-window result-dialog victory-dialog">
+      <h2 class="result-title victory-title">🏆 KEMENANGAN GEMILANG! 🏆</h2>
+      <div id="victory-stars" class="stars-rating">★★★</div>
+      <p id="victory-act-title" style="font-weight: 700; color: #cbd5e0;">BAB 1 • ACT 1 Selesai</p>
+      
+      <div class="result-rewards-box">
+        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Hadiah Kemenangan:</div>
+        <div id="victory-gems-earned" style="font-size: 20px; font-weight: 800; color: var(--gems);">+150 Gems</div>
+      </div>
+
+      <div class="result-actions">
+        <button id="btn-victory-map" class="btn-dialog-action btn-dialog-secondary">Peta Babak</button>
+        <button id="btn-victory-next" class="btn-dialog-action btn-dialog-primary">Lanjut Act Berikutnya ➔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= DEFEAT MODAL ================= -->
+  <div id="defeat-modal" class="modal-overlay hidden">
+    <div class="modal-window result-dialog defeat-dialog">
+      <h2 class="result-title defeat-title">☠️ PERTAHANAN HANCUR! ☠️</h2>
+      <p id="defeat-act-title" style="font-weight: 700; color: #fca5a5; margin: 12px 0;">Monster menembus kastil pertahanan.</p>
+      
+      <div class="result-rewards-box">
+        <p style="font-size: 11.5px; color: #cbd5e0;">Tingkatkan tower Anda di dalam match atau summon tower Rarity lebih tinggi dari Gacha!</p>
+      </div>
+
+      <div class="result-actions">
+        <button id="btn-defeat-gacha" class="btn-dialog-action btn-dialog-secondary">✨ Gacha Tower</button>
+        <button id="btn-defeat-retry" class="btn-dialog-action btn-dialog-primary">🔄 Coba Lagi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Standalone Universal Script (Works locally via file:/// and HTTP) -->
+  <script src="js/game.bundle.js"></script>
+</body>
+</html>
